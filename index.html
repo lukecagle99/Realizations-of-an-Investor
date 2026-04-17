@@ -47,7 +47,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
-            font-size: 0.85em; /* Slightly smaller for the footer area */
+            font-size: 0.85em;
         }
         .perf-table th {
             text-align: left;
@@ -63,7 +63,6 @@
             font-size: 0.8em;
             font-style: italic;
             color: #666;
-            text-align: center;
         }
     </style>
 </head>
@@ -108,17 +107,19 @@
 
     <hr>
 
+    <div style="margin-top: 40px; margin-bottom: 40px;">
+        <h3 style="text-align: left; border-bottom: 2px solid #000; padding-bottom: 5px;">Performance Archive</h3>
+        <div id="performance-table-container">
+            <p class="loading-text">Loading performance metrics...</p>
+        </div>
+    </div>
+
+    <hr>
+
     <p align="center">
         <small>Archive maintained by Luke C. Cagle. All information contained on this website and in these letters reflects the opinions of Luke C. Cagle. 
             All information provided on this website and in these letters are for informational purposes only and should not be interpreted as investment advice or a recommendation to purchase or sell any specific security.</small>
     </p>
-
-    <div style="margin-top: 60px;">
-        <h3 style="text-align: left; border-bottom: 2px solid #000; padding-bottom: 5px;">Performance Archive</h3>
-        <div id="performance-table-container">
-            <p class="loading-text">Loading latest performance data...</p>
-        </div>
-    </div>
 </div>
 
 <script>
