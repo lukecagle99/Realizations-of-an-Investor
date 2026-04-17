@@ -42,6 +42,30 @@
             text-align: center;
             margin-bottom: 30px;
         }
+        /* Performance Table Styling */
+        .perf-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+        .perf-table th {
+            text-align: left;
+            border-bottom: 1px solid #000;
+            padding: 4px;
+            font-weight: bold;
+            color: #000;
+        }
+        .perf-table td {
+            padding: 4px;
+            border-bottom: 1px solid #eee;
+        }
+        .loading-text {
+            font-size: 0.85em;
+            font-style: italic;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -55,6 +79,10 @@
     <ul>
         <li><a href="Realizations%20of%20an%20Investor.pdf" target="_blank" rel="noopener noreferrer"><strong>Realizations of an Investor (Core Philosophy)</strong></a></li>
     </ul>
+
+    <div id="performance-table-container">
+        <p class="loading-text">Loading performance metrics...</p>
+    </div>
 
     <hr>
 
@@ -90,6 +118,43 @@
             All information provided on this website and in these letters are for informational purposes only and should not be interpreted as investment advice or a recommendation to purchase or sell any specific security.</small>
     </p>
 </div>
+
+<script>
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTsYupTZW8tVAIFsDS-MxUKIGD_Z5beYep6_US4ZslCefS7aaBjynGDutLuNdbrL1iymvgsMy-IV25p/pub?gid=406271317&single=true&output=csv';
+
+    async function fetchPerformance() {
+        try {
+            const response = await fetch(csvUrl);
+            const data = await response.text();
+            
+            // Regex to handle CSV parsing with potential commas inside quotes
+            const rows = data.split('\n').filter(row => row.trim() !== '').map(row => {
+                return row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
+            });
+            
+            if (rows.length === 0) throw new Error('No data');
+
+            let tableHtml = '<table class="perf-table">';
+            rows.forEach((row, index) => {
+                const tag = index === 0 ? 'th' : 'td';
+                tableHtml += '<tr>';
+                row.forEach(cell => {
+                    const cleanCell = cell.replace(/^"|"$/g, '');
+                    tableHtml += `<${tag}>${cleanCell}</${tag}>`;
+                });
+                tableHtml += '</tr>';
+            });
+            tableHtml += '</table>';
+            
+            document.getElementById('performance-table-container').innerHTML = tableHtml;
+        } catch (error) {
+            document.getElementById('performance-table-container').innerHTML = '';
+            console.error('Fetch error:', error);
+        }
+    }
+
+    fetchPerformance();
+</script>
 
 </body>
 </html>
