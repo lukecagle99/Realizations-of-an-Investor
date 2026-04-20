@@ -42,7 +42,11 @@
             text-align: center;
             margin-bottom: 30px;
         }
-        /* Performance Table Styling */
+        /* Refined Performance Table Styling */
+        .perf-table-wrapper {
+            width: 100%;
+            overflow-x: auto; /* Allows horizontal scroll on mobile if table is too wide */
+        }
         .perf-table {
             width: 100%;
             border-collapse: collapse;
@@ -52,12 +56,14 @@
         .perf-table th {
             text-align: left;
             border-bottom: 1px solid #000;
-            padding: 4px;
+            padding: 6px 4px;
             font-weight: bold;
+            white-space: nowrap;
         }
         .perf-table td {
-            padding: 4px;
+            padding: 6px 4px;
             border-bottom: 1px solid #eee;
+            white-space: nowrap; /* Prevents names from cutting off or wrapping */
         }
         .loading-text {
             font-size: 0.8em;
@@ -109,8 +115,10 @@
 
     <div style="margin-top: 40px; margin-bottom: 40px;">
         <h3 style="text-align: left; border-bottom: 2px solid #000; padding-bottom: 5px;">Performance Archive</h3>
-        <div id="performance-table-container">
-            <p class="loading-text">Loading performance metrics...</p>
+        <div class="perf-table-wrapper">
+            <div id="performance-table-container">
+                <p class="loading-text">Loading performance metrics...</p>
+            </div>
         </div>
     </div>
 
@@ -130,8 +138,9 @@
             const response = await fetch(csvUrl);
             const data = await response.text();
             
+            // Advanced CSV parsing: Splits by comma but IGNORES commas inside quotes
             const rows = data.split('\n').filter(row => row.trim() !== '').map(row => {
-                return row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
+                return row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); 
             });
             
             if (rows.length === 0) throw new Error('No data');
@@ -141,7 +150,8 @@
                 const tag = index === 0 ? 'th' : 'td';
                 tableHtml += '<tr>';
                 row.forEach(cell => {
-                    const cleanCell = cell.replace(/^"|"$/g, '');
+                    // Removes extra quotes and trims whitespace from the edges
+                    const cleanCell = cell.replace(/^"|"$/g, '').trim();
                     tableHtml += `<${tag}>${cleanCell}</${tag}>`;
                 });
                 tableHtml += '</tr>';
