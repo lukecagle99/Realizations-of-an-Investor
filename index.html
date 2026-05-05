@@ -45,7 +45,8 @@
         /* Refined Performance Table Styling */
         .perf-table-wrapper {
             width: 100%;
-            overflow-x: auto; /* Allows horizontal scroll on mobile if table is too wide */
+            overflow-x: auto; 
+            min-height: 250px; /* Reserves space to prevent page jumping */
         }
         .perf-table {
             width: 100%;
@@ -63,7 +64,7 @@
         .perf-table td {
             padding: 6px 4px;
             border-bottom: 1px solid #eee;
-            white-space: nowrap; /* Prevents names from cutting off or wrapping */
+            white-space: nowrap; 
         }
         .loading-text {
             font-size: 0.8em;
@@ -134,6 +135,14 @@
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTsYupTZW8tVAIFsDS-MxUKIGD_Z5beYep6_US4ZslCefS7aaBjynGDutLuNdbrL1iymvgsMy-IV25p/pub?gid=406271317&single=true&output=csv';
 
     async function fetchPerformance() {
+        const container = document.getElementById('performance-table-container');
+
+        // Step 1: Check for cached data to show instantly
+        const cachedTable = localStorage.getItem('perfTableCache');
+        if (cachedTable) {
+            container.innerHTML = cachedTable;
+        }
+
         try {
             const response = await fetch(csvUrl);
             const data = await response.text();
@@ -150,7 +159,6 @@
                 const tag = index === 0 ? 'th' : 'td';
                 tableHtml += '<tr>';
                 row.forEach(cell => {
-                    // Removes extra quotes and trims whitespace from the edges
                     const cleanCell = cell.replace(/^"|"$/g, '').trim();
                     tableHtml += `<${tag}>${cleanCell}</${tag}>`;
                 });
@@ -158,9 +166,15 @@
             });
             tableHtml += '</table>';
             
-            document.getElementById('performance-table-container').innerHTML = tableHtml;
+            // Step 2: Update the page with fresh data and save to cache for next time
+            container.innerHTML = tableHtml;
+            localStorage.setItem('perfTableCache', tableHtml);
+
         } catch (error) {
-            document.getElementById('performance-table-container').innerHTML = '<p class="loading-text">Performance data currently unavailable.</p>';
+            // If there's an error and NO cache, show error message
+            if (!cachedTable) {
+                container.innerHTML = '<p class="loading-text">Performance data currently unavailable.</p>';
+            }
             console.error('Fetch error:', error);
         }
     }
