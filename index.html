@@ -46,7 +46,7 @@
         .perf-table-wrapper {
             width: 100%;
             overflow-x: auto; 
-            min-height: 250px; /* Reserves space to prevent page jumping */
+            min-height: 250px; 
         }
         .perf-table {
             width: 100%;
@@ -70,6 +70,14 @@
             font-size: 0.8em;
             font-style: italic;
             color: #666;
+        }
+        /* Section Title Centering */
+        .archive-header {
+            text-align: left; 
+            border-bottom: 2px solid #000; 
+            padding-bottom: 12px; 
+            padding-top: 12px; 
+            margin-top: 0;
         }
     </style>
 </head>
@@ -116,7 +124,7 @@
     <hr>
 
     <div style="margin-top: 40px; margin-bottom: 40px;">
-        <h3 style="text-align: left; border-bottom: 2px solid #000; padding-bottom: 5px;">Performance Archive</h3>
+        <h3 class="archive-header">Performance Archive</h3>
         <div class="perf-table-wrapper">
             <div id="performance-table-container">
                 <p class="loading-text">Loading performance metrics...</p>
@@ -138,7 +146,6 @@
     async function fetchPerformance() {
         const container = document.getElementById('performance-table-container');
 
-        // Step 1: Check for cached data to show instantly
         const cachedTable = localStorage.getItem('perfTableCache');
         if (cachedTable) {
             container.innerHTML = cachedTable;
@@ -148,7 +155,6 @@
             const response = await fetch(csvUrl);
             const data = await response.text();
             
-            // Advanced CSV parsing: Splits by comma but IGNORES commas inside quotes
             const rows = data.split('\n').filter(row => row.trim() !== '').map(row => {
                 return row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); 
             });
@@ -167,12 +173,10 @@
             });
             tableHtml += '</table>';
             
-            // Step 2: Update the page with fresh data and save to cache for next time
             container.innerHTML = tableHtml;
             localStorage.setItem('perfTableCache', tableHtml);
 
         } catch (error) {
-            // If there's an error and NO cache, show error message
             if (!cachedTable) {
                 container.innerHTML = '<p class="loading-text">Performance data currently unavailable.</p>';
             }
