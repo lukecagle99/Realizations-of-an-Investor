@@ -129,7 +129,17 @@
         <h3 class="archive-header">Performance Archive</h3>
         <div class="perf-table-wrapper">
             <div id="performance-table-container">
-                <p class="loading-text">Loading performance metrics...</p>
+                <script>
+                    // Render cached table immediately during initial HTML parsing to prevent any loading text flash
+                    (function() {
+                        const cached = localStorage.getItem('perfTableCache');
+                        if (cached) {
+                            document.write(cached);
+                        } else {
+                            document.write('<p class="loading-text">Loading performance metrics...</p>');
+                        }
+                    })();
+                </script>
             </div>
         </div>
     </div>
@@ -148,13 +158,13 @@
     async function fetchPerformance() {
         const container = document.getElementById('performance-table-container');
 
-        const cachedTable = localStorage.getItem('perfTableCache');
-        if (cachedTable) {
-            container.innerHTML = cachedTable;
-        }
+        // Append timestamp to URL to prevent aggressive browser/CDN caching on the Google Sheets endpoint
+        const cacheBustUrl = csvUrl + '&_t=' + new Date().getTime();
 
         try {
-            const response = await fetch(csvUrl);
+            const response = await fetch(cacheBustUrl, { cache: 'no-cache' });
+            if (!response.ok) throw new Error('Network response failed');
+            
             const data = await response.text();
             
             const rows = data.split('\n').filter(row => row.trim() !== '').map(row => {
@@ -175,11 +185,13 @@
             });
             tableHtml += '</table>';
             
+            // Update UI and save fresh data into cache for future visits
             container.innerHTML = tableHtml;
             localStorage.setItem('perfTableCache', tableHtml);
 
         } catch (error) {
-            if (!cachedTable) {
+            // If fetch fails and nothing was cached previously, show fallback message
+            if (!localStorage.getItem('perfTableCache')) {
                 container.innerHTML = '<p class="loading-text">Performance data currently unavailable.</p>';
             }
             console.error('Fetch error:', error);
