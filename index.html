@@ -130,7 +130,7 @@
         <div class="perf-table-wrapper">
             <div id="performance-table-container">
                 <script>
-                    // Render cached table immediately during initial HTML parsing to prevent any loading text flash
+                    // Render cached table immediately during DOM parsing
                     (function() {
                         const cached = localStorage.getItem('perfTableCache');
                         if (cached) {
@@ -157,8 +157,10 @@
 
     async function fetchPerformance() {
         const container = document.getElementById('performance-table-container');
+        
+        // Grab existing DOM table before background fetch overwrites it
+        const existingTable = container.querySelector('.perf-table');
 
-        // Append timestamp to URL to prevent aggressive browser/CDN caching on the Google Sheets endpoint
         const cacheBustUrl = csvUrl + '&_t=' + new Date().getTime();
 
         try {
@@ -174,23 +176,38 @@
             if (rows.length === 0) throw new Error('No data');
 
             let tableHtml = '<table class="perf-table">';
-            rows.forEach((row, index) => {
-                const tag = index === 0 ? 'th' : 'td';
+            rows.forEach((row, rowIndex) => {
+                const tag = rowIndex === 0 ? 'th' : 'td';
                 tableHtml += '<tr>';
-                row.forEach(cell => {
-                    const cleanCell = cell.replace(/^"|"$/g, '').trim();
+                row.forEach((cell, colIndex) => {
+                    let cleanCell = cell.replace(/^"|"$/g, '').trim();
+
+                    // --- FIX 2: PRESERVE LAST GOOD VALUE IF GOOGLE FINANCES SAYS "Loading..." ---
+                    if (cleanCell === 'Loading...') {
+                        if (existingTable && existingTable.rows[rowIndex] && existingTable.rows[rowIndex].cells[colIndex]) {
+                            const prevVal = existingTable.rows[rowIndex].cells[colIndex].textContent.trim();
+                            // Use previous value if it exists and isn't a loading string/dash
+                            if (prevVal && prevVal !== 'Loading...' && prevVal !== '—') {
+                                cleanCell = prevVal;
+                            } else {
+                                cleanCell = '—';
+                            }
+                        } else {
+                            cleanCell = '—';
+                        }
+                    }
+
                     tableHtml += `<${tag}>${cleanCell}</${tag}>`;
                 });
                 tableHtml += '</tr>';
             });
             tableHtml += '</table>';
             
-            // Update UI and save fresh data into cache for future visits
+            // Render update and write back to localStorage
             container.innerHTML = tableHtml;
             localStorage.setItem('perfTableCache', tableHtml);
 
         } catch (error) {
-            // If fetch fails and nothing was cached previously, show fallback message
             if (!localStorage.getItem('perfTableCache')) {
                 container.innerHTML = '<p class="loading-text">Performance data currently unavailable.</p>';
             }
