@@ -183,4 +183,36 @@
                         if (existingTable && existingTable.rows[rowIndex] && existingTable.rows[rowIndex].cells[colIndex]) {
                             const prevVal = existingTable.rows[rowIndex].cells[colIndex].textContent.trim();
                             // Use previous value if it exists and isn't a loading string/dash
-                            if (prevVal && prevVal !== 'Loading...' && prev
+                            if (prevVal && prevVal !== 'Loading...' && prevVal !== '—') {
+                                cleanCell = prevVal;
+                            } else {
+                                cleanCell = '—';
+                            }
+                        } else {
+                            cleanCell = '—';
+                        }
+                    }
+
+                    tableHtml += `<${tag}>${cleanCell}</${tag}>`;
+                });
+                tableHtml += '</tr>';
+            });
+            tableHtml += '</table>';
+            
+            // Render update and write back to localStorage
+            container.innerHTML = tableHtml;
+            localStorage.setItem('perfTableCache', tableHtml);
+
+        } catch (error) {
+            if (!localStorage.getItem('perfTableCache')) {
+                container.innerHTML = '<p class="loading-text">Performance data currently unavailable.</p>';
+            }
+            console.error('Fetch error:', error);
+        }
+    }
+
+    fetchPerformance();
+</script>
+
+</body>
+</html>
